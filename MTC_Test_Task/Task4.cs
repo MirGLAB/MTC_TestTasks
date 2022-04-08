@@ -26,32 +26,144 @@ namespace MTC_Test_Task
     {
         internal static void Run()
         {
+            List<int> inputStream = new List<int>();
+			IEnumerable<int> outputStream;
+            int sortFactor = 2000;
+            int maxValue = 2000;
+            int length = 1000000000;
 
+			Random rnd = new Random();
+			inputStream.Add(rnd.Next(0, maxValue + 1));
+			var prevValue = inputStream.ElementAt(0);
+			for (int i = 1; i < length; i++)
+			{
+				var dif = prevValue - sortFactor;
+				dif = dif < 0 ? 0 : dif;
+				var curValue = rnd.Next(dif, maxValue + 1);
+				inputStream.Add(curValue);
+				prevValue = curValue;
+			}
+
+			outputStream = Sort(inputStream, sortFactor, maxValue);
+
+			Console.WriteLine("Stream was successfuly sorted!\n");
         }
-        internal static IEnumerable<int> Sort(IEnumerable<int> inputStream, int sortFactor, int maxValue)
+
+		internal static IEnumerable<int> Sort(IEnumerable<int> inputStream, int sortFactor, int maxValue)
         {
-            if (sortFactor == 0) return inputStream;
-            
-            IEnumerable<int> result = null;
+			List<int> listInputStream = inputStream.ToList();
 
-            int lastElement = inputStream.ElementAt(0);
-            int dif = inputStream.ElementAt(0) - sortFactor;
+			int partitionSize = Partition(ref listInputStream, 0, listInputStream.Count() - 1);
 
-            while (inputStream.ElementAt(0) - sortFactor < 0)
+			if (partitionSize < 16)
+			{
+				InsertionSort(ref listInputStream);
+			}
+			else if (partitionSize > (2 * Math.Log(listInputStream.Count())))
+			{
+				HeapSort(ref listInputStream);
+			}
+			else
+			{
+				QuickSortRecursive(ref listInputStream, 0, listInputStream.Count() - 1);
+			}
 
-            for (int i = 1; i < inputStream.Count(); i++)
-            {
-                if(inputStream.ElementAt(i) <= lastElement)
-                {
-                    result.Append(inputStream.ElementAt(i));
-                }
-                else
-                {
-                    result.Append(lastElement);
-                }
-            }
+			IEnumerable<int> result = listInputStream;
+			return result;
+		}
 
-            return result;
-        }
-    }
+		private static void InsertionSort(ref List<int> listInputStream)
+		{
+			for (int i = 1; i < listInputStream.Count(); i++)
+			{
+				int value = listInputStream[i];
+				int flag = 0;
+				for (int j = i - 1; j >= 0 && flag != 1;)
+				{
+					if (value < listInputStream[j])
+					{
+						listInputStream[j + 1] = listInputStream[j];
+						j--;
+						listInputStream[j + 1] = value;
+					}
+					else
+						flag = 1;
+				}
+			}
+		}
+
+		private static void HeapSort(ref List<int> listInputStream)
+		{
+			int heapSize = listInputStream.Count();
+			int temp;
+
+			for (int p = (heapSize - 1) / 2; p >= 0; --p)
+				MaxHeapify(ref listInputStream, heapSize, p);
+
+			for (int i = listInputStream.Count() - 1; i > 0; --i)
+			{
+				temp = listInputStream[i];
+				listInputStream[i] = listInputStream[0];
+				listInputStream[0] = temp;
+				--heapSize;
+				MaxHeapify(ref listInputStream, heapSize, 0);
+			}
+		}
+
+		private static void MaxHeapify(ref List<int> listInputStream, int heapSize, int index)
+		{
+			int left = (index + 1) * 2 - 1;
+			int right = (index + 1) * 2;
+			int largest = 0;
+
+			if (left < heapSize && listInputStream[left] > listInputStream[index])
+				largest = left;
+			else
+				largest = index;
+
+			if (right < heapSize && listInputStream[right] > listInputStream[largest])
+				largest = right;
+
+			if (largest != index)
+			{
+				int temp = listInputStream[index];
+				listInputStream[index] = listInputStream[largest];
+				listInputStream[largest] = temp;
+				MaxHeapify(ref listInputStream, heapSize, largest);
+			}
+		}
+
+		private static void QuickSortRecursive(ref List<int> listInputStream, int left, int right)
+		{
+			if (left < right)
+			{
+				int q = Partition(ref listInputStream, left, right);
+				QuickSortRecursive(ref listInputStream, left, q - 1);
+				QuickSortRecursive(ref listInputStream, q + 1, right);
+			}
+		}
+
+		private static int Partition(ref List<int> listInputStream, int left, int right)
+		{
+			int pivot = listInputStream[right];
+			int temp;
+			int i = left;
+
+			for (int j = left; j < right; ++j)
+			{
+				if (listInputStream[j] <= pivot)
+				{
+					temp = listInputStream[j];
+					listInputStream[j] = listInputStream[i];
+					listInputStream[i] = temp;
+					i++;
+				}
+			}
+
+			listInputStream[right] = listInputStream[i];
+			listInputStream[i] = pivot;
+
+			return i;
+		}
+	}
 }

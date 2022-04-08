@@ -13,7 +13,7 @@ namespace MTC_Test_Task
             Console.WriteLine("Task 3");
             Task3.Run();
             Console.WriteLine("Task 4");
-            //Task4.Run();
+            Task4.Run();
             Console.WriteLine("Task 5");
             Task5.Run();
 
